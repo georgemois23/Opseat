@@ -86,7 +86,7 @@ export default function CreateRestaurant() {
     form.categories.length > 0 &&
     form.schedules.length > 0 &&
     form.minimumOrderAmount !== undefined &&
-    form.minimumOrderAmount > 0;
+    form.minimumOrderAmount >= 0;
 
   const handleSearchAddress = async (q: string) => {
     if (!q) return setResults([]);
@@ -155,10 +155,10 @@ export default function CreateRestaurant() {
         },
         { withCredentials: true }
       );
+      navigate('/restaurant/my');
     } catch (error) {
       console.error('Failed to create restaurant', error);
     }
-    navigate('/restaurant/my');
   };
 
   return (
