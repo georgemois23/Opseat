@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Box, Typography, Divider, Checkbox, FormControlLabel, Stack, Button, Tooltip, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -49,15 +49,18 @@ const getDefaultSchedules = (): RestaurantSchedule[] => {
 
 const RestaurantScheduleForm = ({ initialSchedules, onChange }: Props) => {
   const theme = useTheme();
-  const defaultSchedules = getDefaultSchedules();
+  const defaultSchedules = useMemo(() => getDefaultSchedules(), []);
 
   useEffect(() => {
     if (!initialSchedules || initialSchedules.length === 0) {
       onChange(defaultSchedules);
     }
-  }, []);
+  }, [defaultSchedules, initialSchedules, onChange]);
 
-  const schedules = initialSchedules && initialSchedules.length > 0 ? initialSchedules : defaultSchedules;
+  const schedules = useMemo(
+    () => (initialSchedules && initialSchedules.length > 0 ? initialSchedules : defaultSchedules),
+    [initialSchedules, defaultSchedules]
+  );
 
   const handleUpdate = (dayValue: DayOfWeek, field: keyof RestaurantSchedule, value: unknown) => {
     const updatedSchedules = schedules.map((item) => (item.dayOfWeek === dayValue ? { ...item, [field]: value } : item));
@@ -149,7 +152,16 @@ const RestaurantScheduleForm = ({ initialSchedules, onChange }: Props) => {
               {getDayName(schedule.dayOfWeek).toLowerCase()}
             </Typography>
 
-            <Box sx={{ display: 'flex', gap: 2, flexGrow: 1, width: '100%', flexWrap: 'wrap' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                flexGrow: 1,
+                minWidth: 0,
+                width: { xs: '100%', sm: 'auto' },
+                flexWrap: 'wrap',
+              }}
+            >
               <TimePicker
                 label="Open"
                 value={toDayjs(schedule.openTime)}
@@ -174,7 +186,7 @@ const RestaurantScheduleForm = ({ initialSchedules, onChange }: Props) => {
             </Box>
 
             <FormControlLabel
-              sx={{ minWidth: 100, ml: 0 }}
+              sx={{ minWidth: 100, ml: 0, flexShrink: 0, position: 'relative', zIndex: 1 }}
               control={
                 <Checkbox
                   checked={schedule.isClosed}

@@ -46,6 +46,7 @@ export default function CreateRestaurant() {
     deliveryRadius: undefined as number | undefined,
     categories: [] as GreekRestaurantCategory[],
     schedules: [] as RestaurantSchedule[],
+    minimumOrderAmount: undefined as number | undefined,
   });
 
   const [query, setQuery] = useState('');
@@ -83,7 +84,9 @@ export default function CreateRestaurant() {
     form.longitude !== undefined &&
     form.deliveryRadius !== undefined &&
     form.categories.length > 0 &&
-    form.schedules.length > 0;
+    form.schedules.length > 0 &&
+    form.minimumOrderAmount !== undefined &&
+    form.minimumOrderAmount > 0;
 
   const handleSearchAddress = async (q: string) => {
     if (!q) return setResults([]);
@@ -148,6 +151,7 @@ export default function CreateRestaurant() {
           deliveryRadius: form.deliveryRadius,
           categories: form.categories,
           schedules: form.schedules,
+          minimumOrderAmount: form.minimumOrderAmount,
         },
         { withCredentials: true }
       );
@@ -240,6 +244,14 @@ export default function CreateRestaurant() {
           sx={outlineSx}
         />
 
+        <TextField
+          label="Minimum order amount"
+          value={form.minimumOrderAmount ?? ''}
+          onChange={(e) => handleChange('minimumOrderAmount', Number(e.target.value))}
+          fullWidth
+          sx={outlineSx}
+        />
+
         <RestaurantCategoryForm
           initialCategories={form.categories}
           onChange={(newCategories) => {
@@ -250,7 +262,9 @@ export default function CreateRestaurant() {
           }}
         />
 
-        <RestaurantScheduleForm onChange={handleScheduleChange} />
+        <RestaurantScheduleForm 
+        initialSchedules={form.schedules}
+        onChange={handleScheduleChange} />
 
         <Button
           variant="contained"
