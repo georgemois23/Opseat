@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithGoogle = async () => {
     setErrorMessage(null);
-    window.location.href = "http://localhost:7001/auth/google";
+    window.location.href = `${process.env.REACT_APP_API_URL}/auth/google`;
   };
 
   const register = async (email: string, password: string, firstname: string, lastname: string) => {
