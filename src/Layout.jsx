@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { Box } from "@mui/material";
 import Header from "./components/Header";
+import BackendWakeDialog from "./components/BackendWakeDialog";
 // import Footer from "./components/Footer";
 
 export default function Layout() {
@@ -13,6 +14,7 @@ export default function Layout() {
       }}
     >
       <Header />
+      <BackendWakeDialog />
       
       {/* - component="main" is good for accessibility (SEO)
           - flexGrow: 1 ensures the footer stays at the bottom if the content is short
