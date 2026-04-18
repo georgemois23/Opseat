@@ -1,16 +1,11 @@
 import { Box, Typography } from "@mui/material";
-import AdminHome from "../features/admin/pages/AdminHome";
 import ClientHome from "../features/customer/pages/ClientHome";
 import { UserRole } from "@/types/roles";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { User } from "@/features/auth/types/auth.types";
 
 export function WhatToRender({ user }: { user: User }) {
-  if (user.role === UserRole.ADMIN) {
-    return <AdminHome />;
-  }
-
-  if (user.role === UserRole.USER) {
+  if (user.role === UserRole.ADMIN || user.role === UserRole.USER) {
     return <ClientHome />;
   }
 

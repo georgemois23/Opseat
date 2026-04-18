@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_BASE = process.env.REACT_APP_API_URL?.replace(/\/+$/, "") ?? "";
 
-const HEALTH_PATHS = ["/api/health", "/health"];
+const HEALTH_PATHS = ["/health"];
 
 export async function isBackendHealthy(): Promise<boolean> {
   const targets = HEALTH_PATHS.map((path) => `${API_BASE}${path}`);

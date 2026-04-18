@@ -1,6 +1,7 @@
 import {
   AppBar,
   Box,
+  Button,
   Toolbar,
   Typography,
   useTheme,
@@ -14,6 +15,7 @@ import { useMobile } from "@/lib/useMobile";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GlobalHeaderSearch from "@/features/search/components/GlobalHeaderSearch";
+import { UserRole } from "@/types/roles";
 
 function Header() {
   const { user } = useAuth();
@@ -154,6 +156,21 @@ function Header() {
               flexShrink: 0,
             }}
           >
+            {user?.role === UserRole.ADMIN && (
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => navigate("/admin")}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 700,
+                  color: "secondary.light",
+                  display: { xs: "none", sm: "inline-flex" },
+                }}
+              >
+                Admin
+              </Button>
+            )}
             {!isMobile && <AddressManagementDrawer />}
             <AccountManagementDrawer />
           </Box>

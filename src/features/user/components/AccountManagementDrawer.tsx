@@ -275,12 +275,12 @@ export default function AccountManagementDrawer() {
             variant="contained"
             color="secondary"
             onClick={() => {
-              navigate("/restaurant/create");
+              navigate("/become-partner");
               setOpen(false);
             }}
             sx={{ textTransform: "none", fontWeight: 700, py: 1.25, borderRadius: 2 }}
           >
-            Create your first restaurant
+            Become a partner
           </Button>
         )}
       </Stack>

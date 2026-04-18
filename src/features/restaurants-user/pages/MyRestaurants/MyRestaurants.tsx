@@ -21,6 +21,7 @@ import api from '@/lib/axios';
 import { useNavigate } from 'react-router-dom';
 import type { Restaurant } from '@/features/restaurants/types/RestaurantData';
 import { RestaurantActiveOrdersBadge } from '@/features/restaurants-user/components/RestaurantOrdersPanel';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const GRADIENTS = [
   ['#0D9488', '#14B8A6'],
@@ -34,6 +35,11 @@ function hashGradient(name: string) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
   return GRADIENTS[Math.abs(h) % GRADIENTS.length];
+}
+
+function normalizeMyRestaurantsList(raw: unknown): Restaurant[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((r): r is Restaurant => r != null && typeof r === 'object' && String((r as Restaurant).id ?? '') !== '');
 }
 
 function OwnerVenueCard({
@@ -212,11 +218,14 @@ export const MyRestaurants: React.FC = () => {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const isRestaurantUser = Boolean(user?.isRestaurantUser);
 
   const fetchRestaurants = async () => {
     try {
       const data = await api.get('/restaurants/my', { withCredentials: true });
-      setRestaurants(data.data);
+      setRestaurants(normalizeMyRestaurantsList(data.data));
     } catch (error) {
       console.error('Failed to fetch restaurants:', error);
     } finally {
@@ -235,6 +244,15 @@ export const MyRestaurants: React.FC = () => {
     } catch (error) {
       console.error('Failed to toggle restaurant status:', error);
     }
+  };
+
+  /** Approved restaurant partners go straight to create; others apply first. */
+  const handleCreateRestaurant = () => {
+    if (isRestaurantUser) {
+      navigate('/restaurant/create');
+      return;
+    }
+    navigate('/partner/application');
   };
 
   if (loading) {
@@ -296,7 +314,7 @@ export const MyRestaurants: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<AddRounded />}
-          onClick={() => navigate('/restaurant/create')}
+          onClick={handleCreateRestaurant}
           sx={{
             borderRadius: 2.5,
             py: 1.25,
@@ -307,7 +325,7 @@ export const MyRestaurants: React.FC = () => {
             boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.15)}`,
           }}
         >
-          Add restaurant
+          {isRestaurantUser ? 'Add restaurant' : 'Apply to add a restaurant'}
         </Button>
       </Stack>
 
@@ -326,17 +344,36 @@ export const MyRestaurants: React.FC = () => {
           <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
             No venues yet
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 360, mx: 'auto', lineHeight: 1.55 }}>
-            Create your first listing to start building menus and taking orders.
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddRounded />}
-            onClick={() => navigate('/restaurant/create')}
-            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
-          >
-            Create restaurant
-          </Button>
+          {isRestaurantUser ? (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 360, mx: 'auto', lineHeight: 1.55 }}>
+                Create your first listing to start building menus and taking orders.
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddRounded />}
+                onClick={handleCreateRestaurant}
+                sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
+              >
+                Create restaurant
+              </Button>
+            </>
+          ) : (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 400, mx: 'auto', lineHeight: 1.55 }}>
+                You need restaurant partner access before you can create a venue. Submit an application and we will
+                review it.
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddRounded />}
+                onClick={handleCreateRestaurant}
+                sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
+              >
+                Request restaurant partner access
+              </Button>
+            </>
+          )}
         </Box>
       ) : (
         <Grid container spacing={2.5}>

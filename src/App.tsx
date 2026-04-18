@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import Login from './pages/Login';
 import HomePage from './pages/Home';
 import BrowsePage from './features/customer/pages/BrowsePage';
@@ -18,6 +18,10 @@ import RestaurantOrderPreviewPage from './features/restaurants/pages/RestaurantO
 import Layout from './Layout';
 import LoadingSpinner from './components/LoadingSpinner';
 import LandingPage from './pages/LandingPage';
+import BecomePartnerPage from './pages/BecomePartnerPage';
+import PartnerApplicationPage from './pages/PartnerApplicationPage';
+import AdminDashboardPage from './features/admin/pages/AdminDashboardPage';
+import { AdminRoute } from './features/admin/components/AdminRoute';
 
 /** Old URLs used `/restaurant/:slug/order/:id`; orders are keyed only by id. */
 function LegacyRestaurantOrderRedirect() {
@@ -26,8 +30,11 @@ function LegacyRestaurantOrderRedirect() {
 }
 
 function App() {
+  const location = useLocation();
   const {user, isLoading} = useAuth()
-  if(isLoading) {
+  /** Let landing page render immediately while auth checks in background. */
+  const isLandingRoute = location.pathname === '/';
+  if(isLoading && !isLandingRoute) {
     return <LoadingSpinner />
   }
   return (
@@ -38,6 +45,20 @@ function App() {
 
     {/* Authenticated Dashboard */}
     <Route path="home" element={user ? <HomePage /> : <Navigate to="/login" />} />
+    <Route path="become-partner" element={user ? <BecomePartnerPage /> : <Navigate to="/login" />} />
+    <Route path="partner/application" element={user ? <PartnerApplicationPage /> : <Navigate to="/login" />} />
+    <Route
+      path="admin"
+      element={
+        user ? (
+          <AdminRoute>
+            <AdminDashboardPage />
+          </AdminRoute>
+        ) : (
+          <Navigate to="/login" />
+        )
+      }
+    />
     <Route path="browse" element={user ? <BrowsePage /> : <Navigate to="/login" />} />
     <Route path="browse/:category" element={user ? <BrowseLegacyRedirect /> : <Navigate to="/login" />} />
 
