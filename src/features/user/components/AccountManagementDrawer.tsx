@@ -28,6 +28,8 @@ import AddressManagementDrawer from '@/features/customer/componentes/AddAddressD
 import { useMobile } from '@/lib/useMobile';
 import MyOrdersDrawerView from '@/features/customer/components/MyOrdersDrawerView';
 import ReceiptLongRounded from '@mui/icons-material/ReceiptLongRounded';
+import EditRounded from '@mui/icons-material/EditRounded';
+import { UserRole } from '@/types/roles';
 
 interface Address {
   id: string;
@@ -211,14 +213,33 @@ export default function AccountManagementDrawer() {
           >
             {initials}
           </Avatar>
-          <Box sx={{ minWidth: 0 }}>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="subtitle1" fontWeight={800} letterSpacing="-0.02em" noWrap>
               {[user?.first_name, user?.last_name].filter(Boolean).join(" ") || "Account"}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block" }}>
               {user?.email}
             </Typography>
           </Box>
+          <IconButton
+            aria-label="Account settings"
+            onClick={() => {
+              navigate("/account/settings");
+              setOpen(false);
+            }}
+            sx={{
+              flexShrink: 0,
+              color: "text.secondary",
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
+              "&:hover": {
+                color: "primary.light",
+                borderColor: alpha(theme.palette.primary.main, 0.5),
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
+              },
+            }}
+          >
+            <EditRounded sx={{ fontSize: 20 }} />
+          </IconButton>
         </Stack>
 
         {isMobile && (
@@ -252,7 +273,7 @@ export default function AccountManagementDrawer() {
           onClick={() => setView('orders')}
           sx={{ textTransform: 'none', fontWeight: 700, py: 1.25, borderRadius: 2 }}
         >
-          Orders 
+          Orders
           <ReceiptLongRounded sx={{ fontSize: 20, ml: 1 }} />
         </Button>
 
@@ -269,21 +290,39 @@ export default function AccountManagementDrawer() {
           >
             My restaurants
           </Button>
-        ) : (
+        ) : null}
+      {/* </Stack> */}
+
+        {user?.isCourrierUser ? (
           <Button
             fullWidth
-            variant="contained"
-            color="secondary"
+            variant="outlined"
+            color="primary"
             onClick={() => {
-              navigate("/become-partner");
+              navigate("/courier");
               setOpen(false);
             }}
-            sx={{ textTransform: "none", fontWeight: 700, py: 1.25, borderRadius: 2 }}
+            sx={{ textTransform: "none", fontWeight: 600, py: 1.25, borderRadius: 2 }}
           >
-            Become a partner
+            Courier panel
           </Button>
-        )}
+        ) : null}
       </Stack>
+
+      {!user?.isRestaurantUser || !user?.isCourrierUser && user?.role !== UserRole.ADMIN ? (
+        <Button
+          variant="text"
+          color="secondary"
+          fullWidth
+          onClick={() => {
+            navigate("/become-partner");
+            setOpen(false);
+          }}
+          sx={{ mt: 1, textTransform: "none", fontWeight: 700, hover: { bgcolor: "transparent" } }}
+        >
+          Become a partner
+        </Button>
+      ) : null}
 
       <Button
         variant="outlined"

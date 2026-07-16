@@ -6,7 +6,7 @@ type NearbyCategoryQuery = {
 };
 
 /** Customer browse: nearby restaurants by categories from backend endpoint. */
-export async function fetchNearbyRestaurantsByCategories({
+export async function  fetchNearbyRestaurantsByCategories({
   categories,
   gpsCoords,
 }: NearbyCategoryQuery): Promise<Restaurant[]> {

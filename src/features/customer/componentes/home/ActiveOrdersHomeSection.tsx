@@ -21,8 +21,9 @@ import {
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSocket } from "@/features/socket/hooks/useSocket";
 
 /**
  * Home preview: in-flight orders only (not draft, not delivered, not cancelled).
@@ -30,27 +31,31 @@ import { useNavigate } from "react-router-dom";
 export function ActiveOrdersHomeSection() {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { subscribe } = useSocket();
   const [active, setActive] = useState<CustomerOrder[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const data = await fetchMyOrders();
-        const all = normalizeCustomerOrdersResponse(data);
-        const a = all.filter((o) => isActiveCustomerOrderStatus(o.status));
-        if (!cancelled) setActive(a);
-      } catch {
-        if (!cancelled) setActive([]);
-      } finally {
-        if (!cancelled) setLoaded(true);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  const load = useCallback(async () => {
+    try {
+      const data = await fetchMyOrders();
+      const all = normalizeCustomerOrdersResponse(data);
+      setActive(all.filter((o) => isActiveCustomerOrderStatus(o.status)));
+    } catch {
+      setActive([]);
+    } finally {
+      setLoaded(true);
+    }
   }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  // Live: refresh the active-orders list whenever the server pushes a status change.
+  useEffect(() => {
+    const unsub = subscribe("order_status_changed", () => void load());
+    return unsub;
+  }, [subscribe, load]);
 
   if (!loaded || active.length === 0) return null;
 

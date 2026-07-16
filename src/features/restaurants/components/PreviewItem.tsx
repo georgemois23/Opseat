@@ -179,6 +179,8 @@ const ItemPreviewModal: React.FC<Props> = ({
           {item.imageUrl ? (
             <Box
               component="img"
+              draggable={false}
+              onContextMenu={(e) => e.preventDefault()}
               src={item.imageUrl}
               alt={item.name}
               sx={{
@@ -339,7 +341,7 @@ const ItemPreviewModal: React.FC<Props> = ({
                             >
                               {link.ingredient.name}
                             </Typography>
-                            {isRequired && (
+                            {/* {isRequired && (
                               <Chip
                                 label="Required"
                                 size="small"
@@ -352,7 +354,7 @@ const ItemPreviewModal: React.FC<Props> = ({
                                   border: `1px solid ${alpha(theme.palette.primary.main, 0.35)}`,
                                 }}
                               />
-                            )}
+                            )} */}
                             {!isAvailable && (
                               <Typography variant="caption" color="error.light" fontWeight={700}>
                                 Sold out

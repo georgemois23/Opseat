@@ -6,6 +6,7 @@ import TwoWheelerRounded from "@mui/icons-material/TwoWheelerRounded";
 import PersonRounded from "@mui/icons-material/PersonRounded";
 import ArrowBackRounded from "@mui/icons-material/ArrowBackRounded";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 type PartnerOption = {
   id: "restaurant" | "courier" | "customer";
@@ -19,23 +20,24 @@ type PartnerOption = {
 export default function BecomePartnerPage() {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const options: PartnerOption[] = [
     {
       id: "restaurant",
       title: "Restaurant owner",
-      description: "Apply for restaurant owner access and track your application progress in one place.",
-      cta: "Open application",
+      description: user?.isRestaurantUser ? "View your restaurants and manage your application." : "Apply for restaurant owner access and track your application progress in one place.",
+      cta: user?.isRestaurantUser ? "View accepted application" : "Open application",
       icon: <StorefrontRounded sx={{ fontSize: 32 }} />,
       onClick: () => navigate("/partner/application"),
     },
     {
       id: "courier",
       title: "Courier",
-      description: "Join as a courier to deliver nearby orders and manage your availability.",
-      cta: "Courier onboarding (soon)",
+      description: user?.isCourrierUser ? "Your courier profile is active." : "Apply as a courier and track your application progress in one place.",
+      cta: user?.isCourrierUser ? "Open courier page" : "Open application",
       icon: <TwoWheelerRounded sx={{ fontSize: 32 }} />,
-      onClick: () => undefined,
+      onClick: () => navigate(user?.isCourrierUser ? "/courier" : "/partner/courier-application"),
     },
     {
       id: "customer",
@@ -92,10 +94,9 @@ export default function BecomePartnerPage() {
                   </Typography>
                 </Box>
                 <Button
-                  variant={option.id === "restaurant" ? "contained" : "outlined"}
-                  color={option.id === "courier" ? "inherit" : "primary"}
+                  variant={option.id === "restaurant" || option.id === "courier" ? "contained" : "outlined"}
+                  color="primary"
                   onClick={option.onClick}
-                  disabled={option.id === "courier"}
                   sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, whiteSpace: "nowrap" }}
                 >
                   {option.cta}

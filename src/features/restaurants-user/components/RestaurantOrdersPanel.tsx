@@ -36,8 +36,9 @@ import {
   useTheme,
 } from "@mui/material";
 import { alpha, type Theme } from "@mui/material/styles";
-import React from "react";
+import React, { useEffect } from "react";
 import { Link as RouterLink } from "react-router-dom";
+import { useSocket } from "@/features/socket/hooks/useSocket";
 
 export function RestaurantOrdersPanel({
   restaurantId,
@@ -51,6 +52,22 @@ export function RestaurantOrdersPanel({
   const hubMode = Boolean(orderDetailBasePath);
   const { orders, loading, error, reload, updateStatus, updatingId } =
     useRestaurantOwnerOrders(restaurantId);
+  const { subscribe } = useSocket();
+
+  // Live board: refresh when a new order comes in (checkout) or any status changes.
+  useEffect(() => {
+    const onNewOrder = (payload: { restaurantId?: string | null }) => {
+      if (payload?.restaurantId && payload.restaurantId !== restaurantId) return;
+      void reload();
+    };
+    const onStatusChanged = () => void reload();
+    const unsubNew = subscribe("new_order", onNewOrder);
+    const unsubStatus = subscribe("order_status_changed", onStatusChanged);
+    return () => {
+      unsubNew();
+      unsubStatus();
+    };
+  }, [subscribe, reload, restaurantId]);
 
   const onSelectChange = (orderId: string) => (e: SelectChangeEvent<OrderStatus>) => {
     void updateStatus(orderId, e.target.value as OrderStatus);

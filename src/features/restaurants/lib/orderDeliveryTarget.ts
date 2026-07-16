@@ -20,7 +20,11 @@ export function resolveDeliveryTarget(order: CustomerOrder): ResolvedDeliveryTar
     if (Number.isFinite(d.getTime())) return { at: d, isEstimate: false };
   }
 
-  const base = order.createdAt ? new Date(order.createdAt) : null;
+  // Base the ETA on when the order was actually placed (checkout), not when the
+  // draft cart was first created — a cart can sit as a draft for hours/days, which
+  // would otherwise push the fallback ETA far into the past.
+  const baseSource = order.placedAt ?? order.createdAt;
+  const base = baseSource ? new Date(baseSource) : null;
   if (!base || !Number.isFinite(base.getTime())) return null;
 
   const mins = order.estimatedDeliveryMinutes;

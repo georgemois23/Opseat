@@ -20,8 +20,19 @@ import LoadingSpinner from './components/LoadingSpinner';
 import LandingPage from './pages/LandingPage';
 import BecomePartnerPage from './pages/BecomePartnerPage';
 import PartnerApplicationPage from './pages/PartnerApplicationPage';
-import AdminDashboardPage from './features/admin/pages/AdminDashboardPage';
+import CourierApplicationPage from './pages/CourierApplicationPage';
+import CourierPage from './pages/CourierPage';
+import CourierDeliveryLivePage from './pages/CourierDeliveryLivePage';
+import CourierHistoryPage from './pages/CourierHistoryPage';
+import AccountSettingsPage from './pages/AccountSettingsPage';
 import { AdminRoute } from './features/admin/components/AdminRoute';
+import AdminLayout from './features/admin/components/AdminLayout';
+import AdminOverviewPage from './features/admin/pages/AdminOverviewPage';
+import AdminRestaurantsPage from './features/admin/pages/AdminRestaurantsPage';
+import AdminRestaurantDetailPage from './features/admin/pages/AdminRestaurantDetailPage';
+import AdminUsersPage from './features/admin/pages/AdminUsersPage';
+import AdminUserDetailPage from './features/admin/pages/AdminUserDetailPage';
+import AdminApplicationsPage from './features/admin/pages/AdminApplicationsPage';
 
 /** Old URLs used `/restaurant/:slug/order/:id`; orders are keyed only by id. */
 function LegacyRestaurantOrderRedirect() {
@@ -45,20 +56,32 @@ function App() {
 
     {/* Authenticated Dashboard */}
     <Route path="home" element={user ? <HomePage /> : <Navigate to="/login" />} />
+    <Route path="account/settings" element={user ? <AccountSettingsPage /> : <Navigate to="/login" />} />
     <Route path="become-partner" element={user ? <BecomePartnerPage /> : <Navigate to="/login" />} />
     <Route path="partner/application" element={user ? <PartnerApplicationPage /> : <Navigate to="/login" />} />
+    <Route path="partner/courier-application" element={user ? <CourierApplicationPage /> : <Navigate to="/login" />} />
+    <Route path="courier" element={user?.isCourrierUser ? <CourierPage /> : <Navigate to="/become-partner" />} />
+    <Route path="courier/history" element={user?.isCourrierUser ? <CourierHistoryPage /> : <Navigate to="/become-partner" />} />
+    <Route path="courier/delivery/:orderId" element={user?.isCourrierUser ? <CourierDeliveryLivePage /> : <Navigate to="/become-partner" />} />
     <Route
       path="admin"
       element={
         user ? (
           <AdminRoute>
-            <AdminDashboardPage />
+            <AdminLayout />
           </AdminRoute>
         ) : (
           <Navigate to="/login" />
         )
       }
-    />
+    >
+      <Route index element={<AdminOverviewPage />} />
+      <Route path="restaurants" element={<AdminRestaurantsPage />} />
+      <Route path="restaurant/:id" element={<AdminRestaurantDetailPage />} />
+      <Route path="users" element={<AdminUsersPage />} />
+      <Route path="user/:id" element={<AdminUserDetailPage />} />
+      <Route path="applications" element={<AdminApplicationsPage />} />
+    </Route>
     <Route path="browse" element={user ? <BrowsePage /> : <Navigate to="/login" />} />
     <Route path="browse/:category" element={user ? <BrowseLegacyRedirect /> : <Navigate to="/login" />} />
 

@@ -12,6 +12,8 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
   register: (email: string, password: string, firstname: string, lastname: string) => Promise<void>;
   logout: () => Promise<void>;
+  /** Re-fetch the signed-in user from the server (e.g. after a profile update). */
+  refreshUser: () => Promise<boolean>;
   errorMessage: string | null;
 }
 
@@ -97,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         loginWithGoogle,
         logout,
+        refreshUser: fetchUser,
         errorMessage,
         register,
       }}

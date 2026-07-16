@@ -1,5 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Container, Stack, Typography } from "@mui/material";
+import {
+  Alert,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Container,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import ArrowBackRounded from "@mui/icons-material/ArrowBackRounded";
 import HourglassTopRounded from "@mui/icons-material/HourglassTopRounded";
@@ -11,6 +23,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useSnackbar } from "@/lib/SnackbarContext";
 
 type PartnerApplicationStatus = "not_applied" | "pending" | "accepted" | "rejected";
+type VehicleType = "bike" | "car" | "scooter" | "other";
 
 function normalizePartnerStatus(raw: any): PartnerApplicationStatus {
   const value = String(raw ?? "").toLowerCase();
@@ -20,22 +33,27 @@ function normalizePartnerStatus(raw: any): PartnerApplicationStatus {
   return "not_applied";
 }
 
-export default function PartnerApplicationPage() {
+export default function CourierApplicationPage() {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
   const { showSnackbar } = useSnackbar();
 
   const [status, setStatus] = useState<PartnerApplicationStatus>("not_applied");
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [requesting, setRequesting] = useState(false);
+  const [vehicleType, setVehicleType] = useState<VehicleType>("bike");
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [country, setCountry] = useState("");
 
   const readStatus = useCallback(async () => {
     setLoadingStatus(true);
     try {
       const candidates = [
-        () => api.get("/restaurant-user/partnership-status", { withCredentials: true }),
-        () => api.get("/partner/request/me", { withCredentials: true }),
+        () => api.get("/couriers/partnership-status", { withCredentials: true }),
+        () => api.get("/partner/courier/request/me", { withCredentials: true }),
         () => api.get("/auth/me", { withCredentials: true }),
       ];
 
@@ -43,7 +61,7 @@ export default function PartnerApplicationPage() {
         try {
           const res = await call();
           const payload = res?.data ?? {};
-          if (typeof payload?.isRestaurantUser === "boolean" && payload.isRestaurantUser) {
+          if (typeof payload?.isCourrierUser === "boolean" && payload.isCourrierUser) {
             setStatus("accepted");
             return;
           }
@@ -51,7 +69,7 @@ export default function PartnerApplicationPage() {
             payload?.status ??
             payload?.applicationStatus ??
             payload?.partnerStatus ??
-            payload?.restaurantPartnerStatus ??
+            payload?.courierPartnerStatus ??
             null;
           if (rawStatus != null) {
             setStatus(normalizePartnerStatus(rawStatus));
@@ -61,11 +79,11 @@ export default function PartnerApplicationPage() {
           // Try next endpoint variant.
         }
       }
-      setStatus(user?.isRestaurantUser ? "accepted" : "not_applied");
+      setStatus(user?.isCourrierUser ? "accepted" : "not_applied");
     } finally {
       setLoadingStatus(false);
     }
-  }, [user?.isRestaurantUser]);
+  }, [user?.isCourrierUser]);
 
   useEffect(() => {
     void readStatus();
@@ -76,7 +94,19 @@ export default function PartnerApplicationPage() {
     setRequesting(true);
     try {
       const requests = [
-        () => api.post("/restaurant-user/request-partnership", { withCredentials: true }),
+        () =>
+          api.post(
+            "/couriers/request-partnership",
+            {
+              vehicleType,
+              street: street.trim(),
+              city: city.trim(),
+              postalCode: postalCode.trim(),
+              country: country.trim(),
+            },
+            { withCredentials: true }
+          ),
+        
       ];
 
       let ok = false;
@@ -92,14 +122,14 @@ export default function PartnerApplicationPage() {
 
       if (!ok) {
         (showSnackbar as (payload: { message: string; severity: string }) => void)({
-          message: "Could not submit partner request.",
+          message: "Could not submit courier request.",
           severity: "error",
         });
         return;
       }
 
       (showSnackbar as (payload: { message: string; severity: string }) => void)({
-        message: "Partner request submitted.",
+        message: "Courier request submitted.",
         severity: "success",
       });
       await readStatus();
@@ -107,7 +137,7 @@ export default function PartnerApplicationPage() {
     } finally {
       setRequesting(false);
     }
-  }, [readStatus, requesting, showSnackbar, status]);
+  }, [city, country, postalCode, readStatus, requesting, showSnackbar, status, street, vehicleType]);
 
   const statusMeta = useMemo(() => {
     if (status === "accepted") {
@@ -115,7 +145,7 @@ export default function PartnerApplicationPage() {
         label: "Accepted",
         color: "success" as const,
         icon: <CheckCircleRounded color="success" />,
-        message: user?.RestaurantUserNumber ? "Your application is approved. You can now view your restaurants." : "Your application is approved. You can now create your first restaurant.",
+        message: "Your courier application is approved.",
       };
     }
     if (status === "pending") {
@@ -123,7 +153,7 @@ export default function PartnerApplicationPage() {
         label: "In review",
         color: "warning" as const,
         icon: <HourglassTopRounded color="warning" />,
-        message: "Your request is being reviewed. We will unlock restaurant creation once approved.",
+        message: "Your courier request is being reviewed.",
       };
     }
     if (status === "rejected") {
@@ -131,14 +161,14 @@ export default function PartnerApplicationPage() {
         label: "Needs update",
         color: "error" as const,
         icon: <ErrorOutlineRounded color="error" />,
-        message: "Your previous request was not approved. You can submit a new application.",
+        message: "Your previous courier request was not approved. You can submit a new application.",
       };
     }
     return {
       label: "Not applied",
       color: "default" as const,
       icon: <HourglassTopRounded color="disabled" />,
-      message: "Submit your request to become a restaurant owner partner.",
+      message: "Submit your request to become a courier partner.",
     };
   }, [status]);
 
@@ -168,10 +198,10 @@ export default function PartnerApplicationPage() {
         <CardContent>
           <Stack spacing={2}>
             <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: "-0.03em" }}>
-              Restaurant owner application
+              Courier application
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Apply once and track your status here. Restaurant creation becomes available after approval.
+              Apply once and track your courier partnership status here.
             </Typography>
 
             {loadingStatus ? (
@@ -190,6 +220,54 @@ export default function PartnerApplicationPage() {
 
             {!loadingStatus && <Alert severity={status === "accepted" ? "success" : status === "rejected" ? "error" : "info"}>{statusMeta.message}</Alert>}
 
+            {canRequest && (
+              <Stack spacing={1.25}>
+                <Typography variant="subtitle2" fontWeight={800}>
+                  Application details
+                </Typography>
+                <TextField
+                  select
+                  label="Vehicle type"
+                  value={vehicleType}
+                  onChange={(e) => setVehicleType(e.target.value as VehicleType)}
+                  size="small"
+                >
+                  <MenuItem value="bike">Bike</MenuItem>
+                  <MenuItem value="car">Car</MenuItem>
+                  <MenuItem value="scooter">Scooter</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                </TextField>
+                <TextField
+                  label="Street"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  size="small"
+                />
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
+                  <TextField
+                    label="City"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    size="small"
+                    fullWidth
+                  />
+                  <TextField
+                    label="Postal code"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    size="small"
+                    fullWidth
+                  />
+                </Stack>
+                <TextField
+                  label="Country"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  size="small"
+                />
+              </Stack>
+            )}
+
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
               {canRequest && (
                 <Button
@@ -198,17 +276,7 @@ export default function PartnerApplicationPage() {
                   disabled={requesting}
                   sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2 }}
                 >
-                  {requesting ? "Submitting request..." : "Request to be a restaurant owner"}
-                </Button>
-              )}
-              {status === "accepted" && (
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => user?.RestaurantUserNumber ? navigate("/restaurant/my") : navigate("/restaurant/create")}
-                  sx={{ textTransform: "none", fontWeight: 800, borderRadius: 2 }}
-                >
-                  {user?.RestaurantUserNumber ? `My restaurants` : "Create your first restaurant"}
+                  {requesting ? "Submitting request..." : "Request to be a courier"}
                 </Button>
               )}
               <Button

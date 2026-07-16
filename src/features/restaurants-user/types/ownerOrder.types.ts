@@ -1,4 +1,4 @@
-import type { OrderLineDisplay } from "@/features/restaurants/types/customerOrder.types";
+import { parseOrderLineItemsForDisplay, type OrderLineDisplay } from "@/features/restaurants/types/customerOrder.types";
 import { compareOrdersForListDisplay, OrderStatus, parseOrderStatus } from "@/features/restaurants/types/orderStatus";
 
 export interface OwnerOrderLine extends OrderLineDisplay {
@@ -45,18 +45,6 @@ function parseDeliveryType(value: unknown): "delivery" | "pickup" | undefined {
   return undefined;
 }
 
-function ingredientNamesFromLine(l: Record<string, unknown>): string[] | undefined {
-  const ingredients = Array.isArray(l.ingredients) ? l.ingredients : [];
-  const names: string[] = [];
-  for (const row of ingredients) {
-    if (typeof row !== "object" || row === null) continue;
-    if ((row as { removed?: boolean }).removed === true) continue;
-    const n = (row as { ingredient?: { name?: string } }).ingredient?.name;
-    if (typeof n === "string" && n.length) names.push(n);
-  }
-  return names.length ? names : undefined;
-}
-
 export function normalizeOrdersResponse(data: unknown): OwnerOrder[] {
   const raw = Array.isArray(data)
     ? data
@@ -73,30 +61,7 @@ export function normalizeOrdersResponse(data: unknown): OwnerOrder[] {
     const st = parseOrderStatus(r.status);
     if (!st || st === OrderStatus.DRAFT) continue;
 
-    const itemsRaw = r.items;
-    const items: OwnerOrderLine[] = [];
-    if (Array.isArray(itemsRaw)) {
-      for (const line of itemsRaw) {
-        if (typeof line !== "object" || line === null) continue;
-        const l = line as Record<string, unknown>;
-        const lid = typeof l.id === "string" ? l.id : null;
-        if (!lid) continue;
-        const qty = typeof l.quantity === "number" ? l.quantity : Number(l.quantity) || 1;
-        const menuItem =
-          typeof l.menuItem === "object" && l.menuItem !== null
-            ? (l.menuItem as { id?: string; name?: string })
-            : undefined;
-        const ingredientNames = ingredientNamesFromLine(l);
-        items.push({
-          id: lid,
-          quantity: qty,
-          priceAtOrder: l.priceAtOrder as string | number | undefined,
-          comment: typeof l.comment === "string" ? l.comment : undefined,
-          menuItem,
-          ingredientNames,
-        });
-      }
-    }
+    const items = parseOrderLineItemsForDisplay(r.items) as OwnerOrderLine[];
 
     out.push({
       id,

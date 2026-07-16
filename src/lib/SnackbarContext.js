@@ -1,18 +1,23 @@
-import React, { createContext, useCallback, useContext, useState } from 'react';
-import { Snackbar, Alert, Typography } from '@mui/material';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { Snackbar, Alert, Slide, Typography } from '@mui/material';
 
 // Create context
 const SnackbarContext = createContext({ showSnackbar: () => {} });
+
+function SlideUp(props) {
+  return <Slide {...props} direction="up" />;
+}
 
 // Provider component
 const Provider = ({ children }) => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState({
     message: '',
-    severity: 'info', // still used for icon
+    severity: 'info', // drives icon + accent colour
   });
 
-  const handleSnackbarClose = useCallback(() => {
+  const handleSnackbarClose = useCallback((_event, reason) => {
+    if (reason === 'clickaway') return;
     setSnackbarOpen(false);
   }, []);
 
@@ -21,46 +26,38 @@ const Provider = ({ children }) => {
     setSnackbarOpen(true);
   }, []);
 
+  // Give people longer to read problems than confirmations.
+  const autoHideDuration = useMemo(() => {
+    const s = snackbarMessage.severity;
+    return s === 'error' || s === 'warning' ? 4500 : 2800;
+  }, [snackbarMessage.severity]);
+
   return (
     <SnackbarContext.Provider value={{ showSnackbar }}>
       {children}
 
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={2500}
+        autoHideDuration={autoHideDuration}
         onClose={handleSnackbarClose}
         anchorOrigin={{ horizontal: 'center', vertical: 'bottom' }}
-        sx={{
-        marginBottom: 0,
-        padding: 0,
-        backgroundColor: 'transparent',
-        zIndex: 13000000,
-      }}
+        TransitionComponent={SlideUp}
+        sx={{ zIndex: 13000000, mb: { xs: 1, sm: 2 } }}
       >
         <Alert
-          variant="outlined"
           severity={snackbarMessage.severity}
+          onClose={handleSnackbarClose}
           sx={{
-          backgroundColor: 'background.default',
-          color: 'text.primary',
-          borderColor: 'text.primary',
-          minHeight: '0 !important',         
-          padding: '2px 8px',           
-          lineHeight: 1,             
-          display: 'inline-flex',   
-          alignItems: 'center',
-          '& .MuiAlert-message': {
-            margin: 0,
-            padding: 0,
-          },
-          '& .MuiAlert-action': {
-            margin: 0,
-            padding: 0,
-          },
-          fontSize: '0.8rem',
+            minWidth: { xs: 'auto', sm: 320 },
+            maxWidth: 'min(92vw, 480px)',
+            px: 2,
+            py: 1,
+            alignItems: 'center',
           }}
         >
-          <Typography>{snackbarMessage.message}</Typography>
+          <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, lineHeight: 1.35 }}>
+            {snackbarMessage.message}
+          </Typography>
         </Alert>
       </Snackbar>
     </SnackbarContext.Provider>

@@ -10,6 +10,7 @@ import {
 } from "@/features/restaurants/types/orderStatus";
 import { resolveDeliveryTarget } from "@/features/restaurants/lib/orderDeliveryTarget";
 import { useDeliveryCountdown } from "@/lib/useDeliveryCountdown";
+import DeliveryTrackingMap from "@/features/customer/components/DeliveryTrackingMap";
 import { Box, Chip, Divider, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import React, { useMemo } from "react";
@@ -34,7 +35,10 @@ export function CustomerOrderItemsList({ items }: { items: OrderLineDisplay[] })
           line.priceAtOrder != null ? parseFloat(String(line.priceAtOrder)) : null;
         const lineTotal =
           unit != null && Number.isFinite(unit) ? unit * Math.max(1, line.quantity) : null;
-        const label = line.menuItem?.name ?? "Item";
+        const label =
+          line.menuItem?.name ??
+          line.dishName ??
+          (line.menuItem?.id ? `Menu item #${line.menuItem.id}` : "Item");
 
         return (
           <Box component="li" key={line.id} sx={{ mb: 1, pl: 0.25 }}>
@@ -122,6 +126,27 @@ export function CustomerOrderFullDetail({ order }: { order: CustomerOrder }) {
           )} */}
         </Box>
       )}
+      {order.deliveryType !== "pickup" &&
+      order.status === OrderStatus.ON_THE_WAY &&
+      typeof order.deliveryLat === "number" &&
+      Number.isFinite(order.deliveryLat) &&
+      typeof order.deliveryLng === "number" &&
+      Number.isFinite(order.deliveryLng) ? (
+        <Box>
+          <Typography
+            variant="overline"
+            color="text.secondary"
+            sx={{ fontWeight: 800, letterSpacing: "0.06em", display: "block", mb: 0.75 }}
+          >
+            Live tracking
+          </Typography>
+          <DeliveryTrackingMap
+            orderId={order.id}
+            destination={{ lat: order.deliveryLat, lng: order.deliveryLng }}
+            destinationAddress={order.deliveryAddress}
+          />
+        </Box>
+      ) : null}
       <Divider sx={{ borderStyle: "dashed" }} />
       <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: "0.06em" }}>
         Your order
@@ -157,6 +182,7 @@ export function OrderDeliveryRow({ order, compact }: DeliveryRowProps) {
       order.id,
       order.status,
       order.createdAt,
+      order.placedAt,
       order.estimatedDeliveryAt,
       order.estimatedDeliveryMinutes,
     ]

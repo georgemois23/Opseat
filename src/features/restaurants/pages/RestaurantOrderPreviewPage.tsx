@@ -6,6 +6,7 @@ import {
 import type { CustomerOrder } from "@/features/restaurants/types/customerOrder.types";
 import { OrderStatus } from "@/features/restaurants/types/orderStatus";
 import { useSnackbar } from "@/lib/SnackbarContext";
+import { useSocket } from "@/features/socket/hooks/useSocket";
 import ArrowBackRounded from "@mui/icons-material/ArrowBackRounded";
 import ReceiptLongRounded from "@mui/icons-material/ReceiptLongRounded";
 import {
@@ -25,6 +26,7 @@ const RestaurantOrderPreviewPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const theme = useTheme();
   const { showSnackbar } = useSnackbar();
+  const { subscribe } = useSocket();
   const [order, setOrder] = useState<CustomerOrder | null | undefined>(undefined);
   const [cancelling, setCancelling] = useState(false);
 
@@ -45,6 +47,17 @@ const RestaurantOrderPreviewPage: React.FC = () => {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Live status: reload this order whenever the server pushes a change for it.
+  useEffect(() => {
+    if (!orderId) return;
+    const onStatusChanged = (payload: { orderId?: string }) => {
+      if (payload?.orderId && payload.orderId !== orderId) return;
+      void load();
+    };
+    const unsub = subscribe("order_status_changed", onStatusChanged);
+    return unsub;
+  }, [subscribe, orderId, load]);
 
   const { backHref, backLabel } = useMemo(() => {
     if (order === undefined) return { backHref: "/home", backLabel: "Back" };
